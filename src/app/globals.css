@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-geist: 'Geist', sans-serif;
+  --ntt-red: #C0272D;
+  --ntt-gold: #D4A017;
+  --ntt-green: #2E7D32;
+  --bg-ntt: linear-gradient(135deg, #FDF5F5 0%, #F5F9F5 45%, #FDFBF0 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: linear-gradient(135deg, #FDF5F5 0%, #F5F9F5 45%, #FDFBF0 100%) !important;
+  background-attachment: fixed !important;
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-geist), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: transparent !important;
+  min-height: 100vh;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #FDF5F5;
+}
+::-webkit-scrollbar-thumb {
+  background: #C0272D;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8B1A1E;
+}
+
+/* Mobile safe area for bottom nav */
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Print styles */
+@media print {
+  .print\:hidden {
+    display: none !important;
+  }
+
+  html, body {
+    background: white !important;
+    font-size: 11pt;
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+
+  th, td {
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    font-size: 10pt;
+  }
+
+  th {
+    background-color: #f0f0f0 !important;
+    print-color-adjust: exact;
+  }
+}

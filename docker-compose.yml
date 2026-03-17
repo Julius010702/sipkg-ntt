@@ -1,0 +1,58 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: sipkg_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sipkg_ntt_db
+      POSTGRES_USER: sipkg_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-sipkg_secure_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sipkg_user -d sipkg_ntt_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sipkg_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://sipkg_user:${DB_PASSWORD:-sipkg_secure_password}@db:5432/sipkg_ntt_db?schema=public
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-this-secret-in-production}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "npx prisma migrate deploy && node server.js"
+
+  # Nginx reverse proxy (opsional, aktifkan jika perlu SSL)
+  # nginx:
+  #   image: nginx:alpine
+  #   container_name: sipkg_nginx
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+  #     - /etc/letsencrypt:/etc/letsencrypt:ro
+  #   depends_on:
+  #     - app
+
+volumes:
+  postgres_data:
+    name: sipkg_postgres_data

@@ -1,0 +1,192 @@
+SIPKG NTT - Struktur Folder Next.js App Router
+================================================
+
+sipkg-ntt/
+├── prisma/
+│   ├── schema.prisma           ✅ Schema database lengkap
+│   ├── seed.ts                 ← Seeder data awal
+│   └── migrations/             ← Auto-generated oleh Prisma
+│
+├── public/
+│   ├── logo-ntt.png
+│   ├── logo-sipkg.svg
+│   └── favicon.ico
+│
+├── src/
+│   ├── app/                    ← Next.js App Router
+│   │   │
+│   │   ├── (auth)/
+│   │   │   ├── login/
+│   │   │   │   └── page.tsx    ← Halaman login
+│   │   │   └── layout.tsx
+│   │   │
+│   │   ├── (dashboard)/
+│   │   │   ├── layout.tsx      ← Layout utama dengan sidebar
+│   │   │   │
+│   │   │   ├── dashboard/
+│   │   │   │   └── page.tsx    ← Dashboard (cek role → redirect)
+│   │   │   │
+│   │   │   ├── ─── MENU ADMIN SEKOLAH ───
+│   │   │   │
+│   │   │   ├── jabatan/
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── tambah/page.tsx
+│   │   │   │   └── [id]/edit/page.tsx
+│   │   │   │
+│   │   │   ├── unit-organisasi/
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── tambah/page.tsx
+│   │   │   │   └── [id]/edit/page.tsx
+│   │   │   │
+│   │   │   ├── guru/
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── tambah/page.tsx
+│   │   │   │   └── [id]/edit/page.tsx
+│   │   │   │
+│   │   │   ├── mata-pelajaran/
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── tambah/page.tsx
+│   │   │   │   └── [id]/edit/page.tsx
+│   │   │   │
+│   │   │   ├── rombongan-belajar/
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── tambah/page.tsx
+│   │   │   │   └── [id]/edit/page.tsx
+│   │   │   │
+│   │   │   ├── perhitungan/
+│   │   │   │   └── page.tsx    ← Hitung kebutuhan guru otomatis
+│   │   │   │
+│   │   │   ├── laporan/
+│   │   │   │   ├── page.tsx
+│   │   │   │   └── cetak/page.tsx
+│   │   │   │
+│   │   │   ├── ─── MENU ADMIN PUSAT ───
+│   │   │   │
+│   │   │   ├── data-sekolah/
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── tambah/page.tsx
+│   │   │   │   └── [id]/page.tsx
+│   │   │   │
+│   │   │   ├── anjab/
+│   │   │   │   ├── page.tsx
+│   │   │   │   ├── tambah/page.tsx
+│   │   │   │   └── [id]/
+│   │   │   │       ├── page.tsx
+│   │   │   │       └── abk/page.tsx
+│   │   │   │
+│   │   │   ├── monitoring/
+│   │   │   │   └── page.tsx    ← Monitoring kebutuhan guru provinsi
+│   │   │   │
+│   │   │   ├── laporan-provinsi/
+│   │   │   │   ├── page.tsx
+│   │   │   │   └── cetak/page.tsx
+│   │   │   │
+│   │   │   ├── pengaturan/
+│   │   │   │   ├── user/
+│   │   │   │   │   ├── page.tsx
+│   │   │   │   │   ├── tambah/page.tsx
+│   │   │   │   │   └── [id]/edit/page.tsx
+│   │   │   │   └── sistem/
+│   │   │   │       └── page.tsx
+│   │   │   │
+│   │   │   └── profil/
+│   │   │       └── page.tsx
+│   │   │
+│   │   └── api/                ← API Routes
+│   │       ├── auth/
+│   │       │   └── [...nextauth]/route.ts
+│   │       ├── dashboard/
+│   │       │   └── route.ts
+│   │       ├── sekolah/
+│   │       │   ├── route.ts
+│   │       │   └── [id]/route.ts
+│   │       ├── guru/
+│   │       │   ├── route.ts
+│   │       │   └── [id]/route.ts
+│   │       ├── jabatan/
+│   │       │   ├── route.ts
+│   │       │   └── [id]/route.ts
+│   │       ├── unit-organisasi/
+│   │       │   ├── route.ts
+│   │       │   └── [id]/route.ts
+│   │       ├── mata-pelajaran/
+│   │       │   ├── route.ts
+│   │       │   └── [id]/route.ts
+│   │       ├── rombongan-belajar/
+│   │       │   ├── route.ts
+│   │       │   └── [id]/route.ts
+│   │       ├── kebutuhan-guru/
+│   │       │   ├── route.ts
+│   │       │   ├── [id]/route.ts
+│   │       │   └── hitung/route.ts ← POST: Trigger kalkulasi
+│   │       ├── anjab/
+│   │       │   ├── route.ts
+│   │       │   └── [id]/route.ts
+│   │       ├── laporan/
+│   │       │   ├── sekolah/route.ts
+│   │       │   └── provinsi/route.ts
+│   │       ├── monitoring/
+│   │       │   └── route.ts
+│   │       └── users/
+│   │           ├── route.ts
+│   │           └── [id]/route.ts
+│   │
+│   ├── components/
+│   │   ├── ui/                     ← Komponen UI dasar
+│   │   │   ├── Button.tsx
+│   │   │   ├── Input.tsx
+│   │   │   ├── Select.tsx
+│   │   │   ├── Table.tsx
+│   │   │   ├── Modal.tsx
+│   │   │   ├── Badge.tsx
+│   │   │   ├── Card.tsx
+│   │   │   ├── Spinner.tsx
+│   │   │   └── Pagination.tsx
+│   │   │
+│   │   ├── layout/                 ← Layout komponen
+│   │   │   ├── Sidebar.tsx         ← Menu berdasarkan role
+│   │   │   ├── Header.tsx
+│   │   │   ├── MobileNav.tsx       ← Bottom nav untuk mobile
+│   │   │   └── Breadcrumb.tsx
+│   │   │
+│   │   ├── dashboard/
+│   │   │   ├── StatCard.tsx
+│   │   │   ├── ChartKebutuhan.tsx
+│   │   │   └── TabelRekap.tsx
+│   │   │
+│   │   ├── guru/
+│   │   │   ├── FormGuru.tsx
+│   │   │   └── TabelGuru.tsx
+│   │   │
+│   │   ├── laporan/
+│   │   │   ├── LaporanSekolah.tsx
+│   │   │   └── LaporanProvinsi.tsx
+│   │   │
+│   │   └── monitoring/
+│   │       └── PetaDistribusi.tsx
+│   │
+│   ├── lib/
+│   │   ├── prisma.ts               ← Prisma client singleton
+│   │   ├── auth.ts                 ← NextAuth config
+│   │   ├── utils.ts                ← Helper functions
+│   │   ├── validations/            ← Zod schemas
+│   │   │   ├── guru.ts
+│   │   │   ├── sekolah.ts
+│   │   │   └── user.ts
+│   │   └── calculations/
+│   │       └── kebutuhanGuru.ts    ← Logika perhitungan
+│   │
+│   ├── hooks/
+│   │   ├── useAuth.ts
+│   │   └── useDebounce.ts
+│   │
+│   └── types/
+│       ├── next-auth.d.ts
+│       └── index.ts
+│
+├── .env                            ← Konfigurasi environment
+├── .env.example
+├── next.config.js
+├── tailwind.config.ts
+├── tsconfig.json
+└── middleware.ts                   ← Auth middleware + role guard

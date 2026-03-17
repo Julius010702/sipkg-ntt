@@ -1,0 +1,391 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN_PUSAT
+  ADMIN_SEKOLAH
+}
+
+enum JenisSekolah {
+  SMA
+  SMK
+  SLB
+}
+
+enum StatusGuru {
+  PNS
+  PPPK
+  HONORER
+  GTT
+}
+
+enum JenisKelamin {
+  L
+  P
+}
+
+enum TingkatKelas {
+  X
+  XI
+  XII
+}
+
+enum StatusAktif {
+  AKTIF
+  NONAKTIF
+}
+
+model User {
+  id          String      @id @default(cuid())
+  nama        String
+  email       String      @unique
+  password    String
+  role        Role
+  avatar      String?
+  statusAktif StatusAktif @default(AKTIF)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  sekolahId String?
+  sekolah   Sekolah? @relation(fields: [sekolahId], references: [id])
+
+  auditLogs AuditLog[]
+
+  @@map("users")
+}
+
+model Kabupaten {
+  id        String    @id @default(cuid())
+  kode      String    @unique
+  nama      String
+  sekolah   Sekolah[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@map("kabupaten")
+}
+
+model Sekolah {
+  id            String       @id @default(cuid())
+  npsn          String       @unique
+  nama          String
+  jenisSekolah  JenisSekolah
+  alamat        String?
+  telepon       String?
+  email         String?
+  kepalaSekolah String?
+  nip           String?
+
+  kabupatenId String
+  kabupaten   Kabupaten @relation(fields: [kabupatenId], references: [id])
+
+  statusAktif StatusAktif @default(AKTIF)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  users            User[]
+  unitOrganisasi   UnitOrganisasi[]
+  guru             Guru[]
+  rombonganBelajar RombonganBelajar[]
+  kebutuhanGuru    KebutuhanGuru[]
+
+  @@map("sekolah")
+}
+
+model Jabatan {
+  id    String @id @default(cuid())
+  kode  String @unique
+  nama  String
+
+  // Relasi & klasifikasi jabatan
+  indukJabatan   String?
+  unitOrganisasi String?
+  jenisJabatan   String?
+  namaUrusan     String?
+
+  // Syarat jabatan
+  pangkatTerendah     String?
+  pangkatTertinggi    String?
+  pendidikanTerendah  String?
+  pendidikanTertinggi String?
+  jurusanTerendah     String?
+  jurusanTertinggi    String?
+
+  // Umum
+  deskripsi   String?
+  statusAktif StatusAktif @default(AKTIF)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  guru                  Guru[]
+  unitOrganisasiJabatan UnitOrganisasiJabatan[]
+  anjabDetail           AnjabDetail[]
+
+  @@map("jabatan")
+}
+
+model UnitOrganisasi {
+  id        String  @id @default(cuid())
+  nama      String
+  kode      String? // dipakai untuk menyimpan eselon (IA, IB, IIA, dst)
+  deskripsi String?
+
+  sekolahId String
+  sekolah   Sekolah @relation(fields: [sekolahId], references: [id])
+
+  parentId String?
+  parent   UnitOrganisasi?  @relation("UnitOrganisasiHierarchy", fields: [parentId], references: [id])
+  children UnitOrganisasi[] @relation("UnitOrganisasiHierarchy")
+
+  statusAktif StatusAktif @default(AKTIF)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  jabatan UnitOrganisasiJabatan[]
+
+  @@map("unit_organisasi")
+}
+
+model UnitOrganisasiJabatan {
+  id               String @id @default(cuid())
+  unitOrganisasiId String
+  jabatanId        String
+  jumlahFormasi    Int    @default(1)
+
+  unitOrganisasi UnitOrganisasi @relation(fields: [unitOrganisasiId], references: [id])
+  jabatan        Jabatan        @relation(fields: [jabatanId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([unitOrganisasiId, jabatanId])
+  @@map("unit_organisasi_jabatan")
+}
+
+model MataPelajaran {
+  id           String         @id @default(cuid())
+  kode         String         @unique
+  nama         String
+  jenisSekolah JenisSekolah[]
+  jamPerMinggu Int            @default(0)
+  deskripsi    String?
+  statusAktif  StatusAktif    @default(AKTIF)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  guru                  Guru[]
+  rombonganBelajarMapel RombonganBelajarMapel[]
+  kebutuhanGuruDetail   KebutuhanGuruDetail[]
+
+  @@map("mata_pelajaran")
+}
+
+model Guru {
+  id                 String       @id @default(cuid())
+  nip                String?      @unique
+  nuptk              String?      @unique
+  nama               String
+  jenisKelamin       JenisKelamin
+  tempatLahir        String?
+  tanggalLahir       DateTime?
+  pendidikanTerakhir String?
+  jurusan            String?
+  statusGuru         StatusGuru
+  tmtPengangkatan    DateTime?
+  noSk               String?
+
+  sekolahId String
+  sekolah   Sekolah @relation(fields: [sekolahId], references: [id])
+
+  jabatanId String?
+  jabatan   Jabatan? @relation(fields: [jabatanId], references: [id])
+
+  mataPelajaranId String?
+  mataPelajaran   MataPelajaran? @relation(fields: [mataPelajaranId], references: [id])
+
+  jumlahJamMengajar Int         @default(0)
+  statusAktif       StatusAktif @default(AKTIF)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@map("guru")
+}
+
+model RombonganBelajar {
+  id           String       @id @default(cuid())
+  tahunAjaran  String
+  tingkat      TingkatKelas
+  jumlahRombel Int
+  jumlahSiswa  Int          @default(0)
+
+  sekolahId String
+  sekolah   Sekolah @relation(fields: [sekolahId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mapel RombonganBelajarMapel[]
+
+  @@unique([sekolahId, tahunAjaran, tingkat])
+  @@map("rombongan_belajar")
+}
+
+model RombonganBelajarMapel {
+  id                 String @id @default(cuid())
+  rombonganBelajarId String
+  mataPelajaranId    String
+  jamPerMinggu       Int
+
+  rombonganBelajar RombonganBelajar @relation(fields: [rombonganBelajarId], references: [id])
+  mataPelajaran    MataPelajaran    @relation(fields: [mataPelajaranId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([rombonganBelajarId, mataPelajaranId])
+  @@map("rombongan_belajar_mapel")
+}
+
+model KebutuhanGuru {
+  id          String  @id @default(cuid())
+  tahunAjaran String
+  sekolahId   String
+  sekolah     Sekolah @relation(fields: [sekolahId], references: [id])
+
+  totalGuruAda        Int @default(0)
+  totalGuruDibutuhkan Int @default(0)
+  totalKekurangan     Int @default(0)
+  totalKelebihan      Int @default(0)
+
+  statusHitung  Boolean   @default(false)
+  tanggalHitung DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  detail KebutuhanGuruDetail[]
+
+  @@unique([sekolahId, tahunAjaran])
+  @@map("kebutuhan_guru")
+}
+
+model KebutuhanGuruDetail {
+  id              String @id @default(cuid())
+  kebutuhanGuruId String
+  mataPelajaranId String
+
+  jumlahRombel         Int @default(0)
+  jamPerMinggu         Int @default(0)
+  totalJamDibutuhkan   Int @default(0)
+  jumlahGuruDibutuhkan Int @default(0)
+  jumlahGuruAda        Int @default(0)
+  kekurangan           Int @default(0)
+  kelebihan            Int @default(0)
+
+  kebutuhanGuru KebutuhanGuru @relation(fields: [kebutuhanGuruId], references: [id])
+  mataPelajaran MataPelajaran @relation(fields: [mataPelajaranId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([kebutuhanGuruId, mataPelajaranId])
+  @@map("kebutuhan_guru_detail")
+}
+
+model Anjab {
+  id                String  @id @default(cuid())
+  tahun             Int
+  namaJabatan       String
+  ikhtisar          String?
+  kualifikasi       String?
+  tugasPokok        String?
+  bahanKerja        String?
+  perangkatKerja    String?
+  hasilKerja        String?
+  tanggungjawab     String?
+  wewenang          String?
+  korelasi          String?
+  kondisiLingkungan String?
+  resikoKerja       String?
+  syaratJabatan     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  detail AnjabDetail[]
+  abk    Abk[]
+
+  @@map("anjab")
+}
+
+model AnjabDetail {
+  id          String @id @default(cuid())
+  anjabId     String
+  jabatanId   String
+  uraianTugas String
+  waktuKerja  Int    @default(0)
+
+  anjab   Anjab   @relation(fields: [anjabId], references: [id])
+  jabatan Jabatan @relation(fields: [jabatanId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("anjab_detail")
+}
+
+model Abk {
+  id                String  @id @default(cuid())
+  anjabId           String
+  tahun             Int
+  namaJabatan       String
+  volumeBebanKerja  Int     @default(0)
+  normaWaktu        Int     @default(0)
+  waktePenyelesaian Int     @default(0)
+  pegawaiDibutuhkan Decimal @default(0) @db.Decimal(10, 2)
+  pegawaiAda        Int     @default(0)
+  kekurangan        Int     @default(0)
+  kelebihan         Int     @default(0)
+
+  anjab Anjab @relation(fields: [anjabId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("abk")
+}
+
+model PengaturanSistem {
+  id        String  @id @default(cuid())
+  kunci     String  @unique
+  nilai     String
+  label     String?
+  deskripsi String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("pengaturan_sistem")
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  aksi       String
+  modul      String
+  dataId     String?
+  dataBefore Json?
+  dataAfter  Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@map("audit_log")
+}
