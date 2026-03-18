@@ -1,64 +1,91 @@
 // src/app/api/anjab/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { anjabSchema } from '@/lib/validations'
 
 export async function GET(_: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
     const data = await prisma.anjab.findUnique({
       where: { id: params.id },
       include: {
+        sekolah: { select: { id: true, nama: true, npsn: true } },
+        abk: { orderBy: { createdAt: 'asc' } },
         detail: { include: { jabatan: true } },
-        abk: { orderBy: { namaJabatan: 'asc' } },
       },
     })
-    if (!data) return NextResponse.json({ error: 'ANJAB tidak ditemukan' }, { status: 404 })
+    if (!data) return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 })
     return NextResponse.json({ data })
-  } catch {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  } catch (error) {
+    return NextResponse.json({ error: 'Gagal mengambil data' }, { status: 500 })
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const body = await req.json()
+    const {
+      tahun, namaJabatan, kodeJabatan,
+      indukJabatan, unitOrganisasi, jenisJabatan, namaUrusan,
+      pangkatTerendah, pangkatTertinggi,
+      pendidikanTerendah, pendidikanTertinggi,
+      jurusanTerendah, jurusanTertinggi,
+      ikhtisar, kualifikasi, tugasPokok, bahanKerja,
+      perangkatKerja, hasilKerja, tanggungjawab,
+      wewenang, korelasi, kondisiLingkungan, resikoKerja, syaratJabatan,
+      sekolahId,
+    } = body
 
-    const role = (session.user as any).role
-    if (role !== 'ADMIN_PUSAT') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
-    const body = await request.json()
-    const parsed = anjabSchema.safeParse(body)
-    if (!parsed.success) {
-      return NextResponse.json({ error: 'Validasi gagal', issues: parsed.error.issues }, { status: 400 })
+    if (!namaJabatan || !tahun) {
+      return NextResponse.json({ error: 'Nama jabatan dan tahun wajib diisi' }, { status: 400 })
     }
 
-    const data = await prisma.anjab.update({ where: { id: params.id }, data: parsed.data })
+    const data = await prisma.anjab.update({
+      where: { id: params.id },
+      data: {
+        tahun:               Number(tahun),
+        namaJabatan,
+        kodeJabatan:         kodeJabatan         ?? null,
+        indukJabatan:        indukJabatan         ?? null,
+        unitOrganisasi:      unitOrganisasi       ?? null,
+        jenisJabatan:        jenisJabatan         ?? null,
+        namaUrusan:          namaUrusan           ?? null,
+        pangkatTerendah:     pangkatTerendah      ?? null,
+        pangkatTertinggi:    pangkatTertinggi     ?? null,
+        pendidikanTerendah:  pendidikanTerendah   ?? null,
+        pendidikanTertinggi: pendidikanTertinggi  ?? null,
+        jurusanTerendah:     jurusanTerendah      ?? null,
+        jurusanTertinggi:    jurusanTertinggi     ?? null,
+        ikhtisar:            ikhtisar             ?? null,
+        kualifikasi:         kualifikasi          ?? null,
+        tugasPokok:          tugasPokok           ?? null,
+        bahanKerja:          bahanKerja           ?? null,
+        perangkatKerja:      perangkatKerja       ?? null,
+        hasilKerja:          hasilKerja           ?? null,
+        tanggungjawab:       tanggungjawab        ?? null,
+        wewenang:            wewenang             ?? null,
+        korelasi:            korelasi             ?? null,
+        kondisiLingkungan:   kondisiLingkungan    ?? null,
+        resikoKerja:         resikoKerja          ?? null,
+        syaratJabatan:       syaratJabatan        ?? null,
+        sekolahId:           sekolahId            ?? null,
+      },
+    })
+
     return NextResponse.json({ data })
-  } catch {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  } catch (error: any) {
+    if (error.code === 'P2025') return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 })
+    return NextResponse.json({ error: 'Gagal memperbarui data' }, { status: 500 })
   }
 }
 
 export async function DELETE(_: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const role = (session.user as any).role
-    if (role !== 'ADMIN_PUSAT') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
-    // Hapus relasi ABK dan detail terlebih dahulu
+    // Hapus ABK dan detail terkait dulu
     await prisma.abk.deleteMany({ where: { anjabId: params.id } })
     await prisma.anjabDetail.deleteMany({ where: { anjabId: params.id } })
     await prisma.anjab.delete({ where: { id: params.id } })
-
-    return NextResponse.json({ success: true })
-  } catch {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+    return NextResponse.json({ message: 'Data ANJAB berhasil dihapus' })
+  } catch (error: any) {
+    if (error.code === 'P2025') return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 })
+    return NextResponse.json({ error: 'Gagal menghapus data' }, { status: 500 })
   }
 }

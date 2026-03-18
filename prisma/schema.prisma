@@ -95,6 +95,7 @@ model Sekolah {
   guru             Guru[]
   rombonganBelajar RombonganBelajar[]
   kebutuhanGuru    KebutuhanGuru[]
+  anjab            Anjab[]
 
   @@map("sekolah")
 }
@@ -303,6 +304,23 @@ model Anjab {
   id                String  @id @default(cuid())
   tahun             Int
   namaJabatan       String
+  kodeJabatan       String?
+
+  // Klasifikasi jabatan
+  indukJabatan      String?
+  unitOrganisasi    String?
+  jenisJabatan      String?
+  namaUrusan        String?
+
+  // Syarat jabatan
+  pangkatTerendah     String?
+  pangkatTertinggi    String?
+  pendidikanTerendah  String?
+  pendidikanTertinggi String?
+  jurusanTerendah     String?
+  jurusanTertinggi    String?
+
+  // Isi ANJAB
   ikhtisar          String?
   kualifikasi       String?
   tugasPokok        String?
@@ -315,6 +333,10 @@ model Anjab {
   kondisiLingkungan String?
   resikoKerja       String?
   syaratJabatan     String?
+
+  // Relasi ke sekolah (opsional, untuk filter per OPD)
+  sekolahId         String?
+  sekolah           Sekolah? @relation(fields: [sekolahId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

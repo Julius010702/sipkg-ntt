@@ -1,43 +1,80 @@
 // src/app/api/anjab/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { anjabSchema } from '@/lib/validations'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const { searchParams } = new URL(req.url)
+    const sekolahId = searchParams.get('sekolahId')
 
     const data = await prisma.anjab.findMany({
-      orderBy: [{ tahun: 'desc' }, { namaJabatan: 'asc' }],
+      where: sekolahId ? { sekolahId } : {},
+      orderBy: { namaJabatan: 'asc' },
       include: {
-        _count: { select: { abk: true, detail: true } },
+        sekolah: { select: { id: true, nama: true, npsn: true } },
+        abk: true,
       },
     })
     return NextResponse.json({ data })
-  } catch {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  } catch (error) {
+    console.error('GET anjab error:', error)
+    return NextResponse.json({ error: 'Gagal mengambil data' }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const session = await auth()
-    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const body = await req.json()
+    const {
+      tahun, namaJabatan, kodeJabatan,
+      indukJabatan, unitOrganisasi, jenisJabatan, namaUrusan,
+      pangkatTerendah, pangkatTertinggi,
+      pendidikanTerendah, pendidikanTertinggi,
+      jurusanTerendah, jurusanTertinggi,
+      ikhtisar, kualifikasi, tugasPokok, bahanKerja,
+      perangkatKerja, hasilKerja, tanggungjawab,
+      wewenang, korelasi, kondisiLingkungan, resikoKerja, syaratJabatan,
+      sekolahId,
+    } = body
 
-    const role = (session.user as any).role
-    if (role !== 'ADMIN_PUSAT') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
-    const body = await request.json()
-    const parsed = anjabSchema.safeParse(body)
-    if (!parsed.success) {
-      return NextResponse.json({ error: 'Validasi gagal', issues: parsed.error.issues }, { status: 400 })
+    if (!namaJabatan || !tahun) {
+      return NextResponse.json({ error: 'Nama jabatan dan tahun wajib diisi' }, { status: 400 })
     }
 
-    const data = await prisma.anjab.create({ data: parsed.data })
+    const data = await prisma.anjab.create({
+      data: {
+        tahun:               Number(tahun),
+        namaJabatan,
+        kodeJabatan:         kodeJabatan         ?? null,
+        indukJabatan:        indukJabatan         ?? null,
+        unitOrganisasi:      unitOrganisasi       ?? null,
+        jenisJabatan:        jenisJabatan         ?? null,
+        namaUrusan:          namaUrusan           ?? null,
+        pangkatTerendah:     pangkatTerendah      ?? null,
+        pangkatTertinggi:    pangkatTertinggi     ?? null,
+        pendidikanTerendah:  pendidikanTerendah   ?? null,
+        pendidikanTertinggi: pendidikanTertinggi  ?? null,
+        jurusanTerendah:     jurusanTerendah      ?? null,
+        jurusanTertinggi:    jurusanTertinggi     ?? null,
+        ikhtisar:            ikhtisar             ?? null,
+        kualifikasi:         kualifikasi          ?? null,
+        tugasPokok:          tugasPokok           ?? null,
+        bahanKerja:          bahanKerja           ?? null,
+        perangkatKerja:      perangkatKerja       ?? null,
+        hasilKerja:          hasilKerja           ?? null,
+        tanggungjawab:       tanggungjawab        ?? null,
+        wewenang:            wewenang             ?? null,
+        korelasi:            korelasi             ?? null,
+        kondisiLingkungan:   kondisiLingkungan    ?? null,
+        resikoKerja:         resikoKerja          ?? null,
+        syaratJabatan:       syaratJabatan        ?? null,
+        sekolahId:           sekolahId            ?? null,
+      },
+    })
+
     return NextResponse.json({ data }, { status: 201 })
-  } catch {
-    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  } catch (error) {
+    console.error('POST anjab error:', error)
+    return NextResponse.json({ error: 'Gagal menyimpan data' }, { status: 500 })
   }
 }
